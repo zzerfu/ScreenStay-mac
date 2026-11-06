@@ -43,24 +43,41 @@ chmod 755 "$ZIP_STAGE/install.command"
 ditto -c -k --keepParent --norsrc "$ZIP_STAGE" "$DIST/ScreenStay-$VERSION.zip"
 unzip -t "$DIST/ScreenStay-$VERSION.zip" >/dev/null
 
-# DMG is a nice extra, but disk-image creation is not available in every
-# sandboxed build environment. Never fail packaging because of it.
+# DMG with a Finder layout (Quiet Meadow background, drag-to-Applications).
+# Uses Homebrew create-dmg if present, otherwise the vendored MIT copy in
+# scripts/create-dmg. Needs a GUI session (Finder AppleScript). Never fail
+# packaging because of the DMG; ZIP is the primary deliverable.
 DMG_STAGE="$WORK/dmg"
 mkdir -p "$DMG_STAGE"
 ditto --norsrc "$STAGED_APP" "$DMG_STAGE/ScreenStay.app"
-ln -s /Applications "$DMG_STAGE/Applications"
-cp "$ROOT/README.md" "$DMG_STAGE/使用说明.md"
-cp "$ROOT/CHANGELOG.md" "$DMG_STAGE/更新记录.md"
 
-if hdiutil create \
-    -volname "ScreenStay $VERSION" \
-    -srcfolder "$DMG_STAGE" \
-    -ov \
-    -format UDZO \
-    "$DIST/ScreenStay-$VERSION.dmg" >/dev/null 2>&1; then
-    hdiutil verify "$DIST/ScreenStay-$VERSION.dmg" >/dev/null
+BG="$ROOT/Resources/dmg-background.png"
+if command -v tiffutil >/dev/null 2>&1 && [[ -f "$ROOT/Resources/dmg-background@2x.png" ]]; then
+    tiffutil -cathidpicheck "$BG" "$ROOT/Resources/dmg-background@2x.png" \
+        -out "$WORK/dmg-background.tiff" >/dev/null 2>&1 && BG="$WORK/dmg-background.tiff"
+fi
+
+CREATE_DMG="$(command -v create-dmg || echo "$ROOT/scripts/create-dmg/create-dmg")"
+DMG_OUT="$DIST/ScreenStay-$VERSION.dmg"
+if "$CREATE_DMG" \
+    --volname "ScreenStay" \
+    --volicon "$ROOT/Resources/AppIcon.icns" \
+    --background "$BG" \
+    --window-pos 200 120 \
+    --window-size 660 400 \
+    --icon-size 128 \
+    --text-size 12 \
+    --icon "ScreenStay.app" 180 200 \
+    --hide-extension "ScreenStay.app" \
+    --app-drop-link 480 200 \
+    --format UDZO \
+    --filesystem HFS+ \
+    --overwrite \
+    "$DMG_OUT" \
+    "$DMG_STAGE"; then
+    hdiutil verify "$DMG_OUT" >/dev/null
 else
-    rm -f "$DIST/ScreenStay-$VERSION.dmg"
+    rm -f "$DMG_OUT"
     echo "提示：当前环境无法创建 DMG，已跳过；ZIP 安装包可正常使用。"
 fi
 
