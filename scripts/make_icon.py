@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
-"""Generate the ScreenStay app icon (requires Pillow)."""
+"""Generate the ScreenStay app icon (requires Pillow).
+
+macOS applies the squircle mask itself — fill the full 1024 canvas.
+Do not bake large rounded margins or drop shadows into the asset.
+"""
 
 from __future__ import annotations
 
@@ -7,8 +11,7 @@ import shutil
 import subprocess
 from pathlib import Path
 
-import numpy as np
-from PIL import Image, ImageChops, ImageDraw, ImageFilter
+from PIL import Image, ImageDraw, ImageFilter
 
 ROOT = Path(__file__).resolve().parent.parent
 RESOURCES = ROOT / "Resources"
@@ -18,108 +21,87 @@ SCALE = 2
 SIZE = 1024 * SCALE
 
 
-def lerp(a: float, b: float, t: float) -> float:
-    return a + (b - a) * t
-
-
 def gradient(size: int, top_left: tuple[int, int, int], bottom_right: tuple[int, int, int]) -> Image.Image:
-    y, x = np.mgrid[0:size, 0:size].astype(np.float32)
-    t = (x / size * 0.45) + (y / size * 0.55)
-    t = np.clip(t, 0.0, 1.0)[..., None]
-    top = np.array(top_left, dtype=np.float32)
-    bottom = np.array(bottom_right, dtype=np.float32)
-    array = (top + (bottom - top) * t).astype(np.uint8)
-    return Image.fromarray(array, "RGB")
-
-def rounded_mask(size: int, radius: int) -> Image.Image:
-    mask = Image.new("L", (size, size), 0)
-    draw = ImageDraw.Draw(mask)
-    draw.rounded_rectangle((0, 0, size - 1, size - 1), radius=radius, fill=255)
-    return mask
+    """Fast diagonal gradient: paint small, upsample."""
+    small = 256
+    img = Image.new("RGB", (small, small))
+    px = img.load()
+    r0, g0, b0 = top_left
+    r1, g1, b1 = bottom_right
+    denom = float(small - 1)
+    for y in range(small):
+        for x in range(small):
+            t = (x / denom) * 0.40 + (y / denom) * 0.60
+            t = 0.0 if t < 0 else (1.0 if t > 1 else t)
+            px[x, y] = (
+                int(r0 + (r1 - r0) * t),
+                int(g0 + (g1 - g0) * t),
+                int(b0 + (b1 - b0) * t),
+            )
+    return img.resize((size, size), Image.Resampling.BICUBIC)
 
 
 def draw_icon() -> Image.Image:
-    canvas = Image.new("RGBA", (SIZE, SIZE), (0, 0, 0, 0))
+    # Full-bleed canvas — system mask will clip corners.
+    # Palette: midnight indigo → soft violet (screen/always-on), no mint green.
+    background = gradient(SIZE, (18, 24, 48), (52, 38, 92)).convert("RGBA")
+    canvas = background.copy()
 
-    margin = int(86 * SCALE)
-    tile_size = SIZE - margin * 2
-    radius = int(210 * SCALE)
-    mask = rounded_mask(tile_size, radius)
-
-    # Soft shadow under the rounded tile.
-    shadow = Image.new("RGBA", (SIZE, SIZE), (0, 0, 0, 0))
-    shadow_draw = ImageDraw.Draw(shadow)
-    shadow_draw.rounded_rectangle(
-        (margin, margin + int(20 * SCALE), SIZE - margin, SIZE - margin + int(20 * SCALE)),
-        radius=radius,
-        fill=(0, 0, 0, 165),
-    )
-    shadow = shadow.filter(ImageFilter.GaussianBlur(int(28 * SCALE)))
-    canvas.alpha_composite(shadow)
-
-    background = gradient(tile_size, (10, 21, 39), (7, 78, 73)).convert("RGBA")
-    canvas.paste(background, (margin, margin), mask)
-
-    # Subtle glow in the top-left and bottom-right.
-    glow = Image.new("RGBA", (tile_size, tile_size), (0, 0, 0, 0))
+    glow = Image.new("RGBA", (SIZE, SIZE), (0, 0, 0, 0))
     glow_draw = ImageDraw.Draw(glow)
     glow_draw.ellipse(
-        (-tile_size * 0.20, -tile_size * 0.32, tile_size * 0.52, tile_size * 0.42),
-        fill=(82, 255, 208, 55),
+        (-SIZE * 0.18, -SIZE * 0.28, SIZE * 0.58, SIZE * 0.46),
+        fill=(120, 160, 255, 70),
     )
     glow_draw.ellipse(
-        (tile_size * 0.68, tile_size * 0.65, tile_size * 1.25, tile_size * 1.28),
-        fill=(36, 150, 255, 38),
+        (SIZE * 0.55, SIZE * 0.58, SIZE * 1.22, SIZE * 1.28),
+        fill=(180, 110, 255, 48),
     )
-    glow = glow.filter(ImageFilter.GaussianBlur(int(62 * SCALE)))
-    glow.putalpha(ImageChops.multiply(glow.getchannel("A"), mask))
-    canvas.alpha_composite(glow, (margin, margin))
+    glow = glow.filter(ImageFilter.GaussianBlur(int(72 * SCALE)))
+    canvas.alpha_composite(glow)
 
     draw = ImageDraw.Draw(canvas)
 
-    # Display outline.
-    left = int(226 * SCALE)
-    top = int(286 * SCALE)
-    right = int(798 * SCALE)
-    bottom = int(660 * SCALE)
-    stroke = int(24 * SCALE)
+    left = int(150 * SCALE)
+    top = int(190 * SCALE)
+    right = int(874 * SCALE)
+    bottom = int(668 * SCALE)
+    stroke = int(30 * SCALE)
     display_radius = int(58 * SCALE)
+    outline = (228, 232, 255, 255)
     draw.rounded_rectangle(
         (left, top, right, bottom),
         radius=display_radius,
-        outline=(207, 255, 238, 255),
+        outline=outline,
         width=stroke,
     )
 
-    # Inner screen tint.
-    inner = int(30 * SCALE)
+    inner = int(34 * SCALE)
     draw.rounded_rectangle(
         (left + inner, top + inner, right - inner, bottom - inner),
-        radius=display_radius - inner // 2,
-        fill=(12, 44, 52, 185),
+        radius=max(display_radius - inner // 2, 8),
+        fill=(22, 28, 58, 200),
     )
 
-    # Stand.
-    stem_width = int(54 * SCALE)
+    stem_width = int(60 * SCALE)
     draw.rounded_rectangle(
         (
             SIZE // 2 - stem_width // 2,
             bottom - int(2 * SCALE),
             SIZE // 2 + stem_width // 2,
-            int(714 * SCALE),
+            int(740 * SCALE),
         ),
-        radius=int(12 * SCALE),
-        fill=(207, 255, 238, 255),
+        radius=int(14 * SCALE),
+        fill=outline,
     )
     draw.rounded_rectangle(
-        (int(390 * SCALE), int(704 * SCALE), int(634 * SCALE), int(741 * SCALE)),
-        radius=int(18 * SCALE),
-        fill=(207, 255, 238, 255),
+        (int(340 * SCALE), int(726 * SCALE), int(684 * SCALE), int(776 * SCALE)),
+        radius=int(20 * SCALE),
+        fill=outline,
     )
 
-    # Play circle.
-    center = (SIZE // 2, int(474 * SCALE))
-    play_radius = int(118 * SCALE)
+    center = (SIZE // 2, int(430 * SCALE))
+    play_radius = int(148 * SCALE)
     play_layer = Image.new("RGBA", (SIZE, SIZE), (0, 0, 0, 0))
     play_draw = ImageDraw.Draw(play_layer)
     play_draw.ellipse(
@@ -129,25 +111,24 @@ def draw_icon() -> Image.Image:
             center[0] + play_radius,
             center[1] + play_radius,
         ),
-        fill=(64, 235, 170, 255),
+        fill=(130, 168, 255, 255),
     )
-    play_layer = play_layer.filter(ImageFilter.GaussianBlur(int(1.5 * SCALE)))
+    glow_ring = play_layer.filter(ImageFilter.GaussianBlur(int(20 * SCALE)))
+    canvas.alpha_composite(glow_ring)
     canvas.alpha_composite(play_layer)
     draw = ImageDraw.Draw(canvas)
 
-    # Play triangle.
-    tri_left = center[0] - int(37 * SCALE)
-    tri_right = center[0] + int(55 * SCALE)
-    tri_top = center[1] - int(62 * SCALE)
-    tri_bottom = center[1] + int(62 * SCALE)
+    tri_left = center[0] - int(44 * SCALE)
+    tri_right = center[0] + int(70 * SCALE)
+    tri_top = center[1] - int(76 * SCALE)
+    tri_bottom = center[1] + int(76 * SCALE)
     draw.polygon(
         [(tri_left, tri_top), (tri_left, tri_bottom), (tri_right, center[1])],
-        fill=(8, 52, 48, 255),
+        fill=(22, 28, 58, 255),
     )
 
-    # Live/awake dot in the upper-right of the display.
-    dot_center = (int(744 * SCALE), int(340 * SCALE))
-    dot_radius = int(19 * SCALE)
+    dot_center = (int(812 * SCALE), int(246 * SCALE))
+    dot_radius = int(22 * SCALE)
     draw.ellipse(
         (
             dot_center[0] - dot_radius,
@@ -155,21 +136,19 @@ def draw_icon() -> Image.Image:
             dot_center[0] + dot_radius,
             dot_center[1] + dot_radius,
         ),
-        fill=(112, 255, 202, 255),
+        fill=(255, 140, 160, 255),
     )
 
-    # Thin top highlight on the tile.
     highlight = Image.new("RGBA", (SIZE, SIZE), (0, 0, 0, 0))
     highlight_draw = ImageDraw.Draw(highlight)
     highlight_draw.arc(
-        (margin + int(34 * SCALE), margin + int(22 * SCALE),
-         SIZE - margin - int(34 * SCALE), SIZE - margin - int(22 * SCALE)),
+        (int(40 * SCALE), int(28 * SCALE), SIZE - int(40 * SCALE), SIZE - int(28 * SCALE)),
         start=200,
         end=340,
-        fill=(255, 255, 255, 55),
-        width=int(8 * SCALE),
+        fill=(255, 255, 255, 48),
+        width=int(10 * SCALE),
     )
-    highlight = highlight.filter(ImageFilter.GaussianBlur(int(5 * SCALE)))
+    highlight = highlight.filter(ImageFilter.GaussianBlur(int(6 * SCALE)))
     canvas.alpha_composite(highlight)
 
     return canvas.resize((1024, 1024), Image.Resampling.LANCZOS)
