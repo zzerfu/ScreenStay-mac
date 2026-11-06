@@ -2,7 +2,7 @@
 
 本文件记录 ScreenStay 从 1.0.0 到当前版本的变更。
 
-[产品页](index.html) · [网页版使用说明](readme.html) · [网页版更新记录](changelog.html) · [下载 1.2.3](dist/ScreenStay-1.2.3.dmg)
+[下载 1.2.3](dist/ScreenStay-1.2.3.dmg)
 
 | 项目 | 内容 |
 | --- | --- |
@@ -252,8 +252,5 @@ PreventUserIdleSystemSleep named: "ScreenStay: media is playing"
 
 ## 相关链接
 
-- [产品页](index.html)
-- [网页版使用说明](readme.html)
-- [网页版更新记录](changelog.html)
 - [下载最新 DMG](dist/ScreenStay-1.2.3.dmg)
 - [使用说明 Markdown](README.md)

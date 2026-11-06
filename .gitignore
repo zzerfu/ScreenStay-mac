@@ -5,3 +5,7 @@ DerivedData/
 .web-backup-*/
 ScreenStay.app/
 ._*
+index.html
+readme.html
+changelog.html
+docs.css

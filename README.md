@@ -2,7 +2,7 @@
 
 > 一个常驻 macOS 菜单栏的小工具：音乐或视频播放时阻止屏幕休眠，暂停后自动释放。
 
-[产品页](index.html) · [网页版使用说明](readme.html) · [网页版更新记录](changelog.html) · [下载 DMG](dist/ScreenStay-1.2.3.dmg)
+[下载 DMG](dist/ScreenStay-1.2.3.dmg)
 
 | 项目 | 内容 |
 | --- | --- |
@@ -209,10 +209,6 @@ python3 scripts/make_icon.py
 
 ```text
 ScreenStay/
-├── index.html                     # 草地 footer 产品页
-├── readme.html                    # 网页版使用说明
-├── changelog.html                 # 网页版更新记录
-├── docs.css                       # 文档页共享样式
 ├── README.md
 ├── CHANGELOG.md
 ├── build.sh
@@ -240,8 +236,6 @@ ScreenStay/
 │   ├── Info.plist
 │   ├── AppIcon.icns
 │   ├── AppIcon-1024.png
-│   ├── Profile.jpg
-│   └── footer-preview.webp
 └── scripts/make_icon.py
 ```
 
@@ -282,8 +276,5 @@ defaults delete com.zzerfu.ScreenStay
 
 ## 相关链接
 
-- [产品页](index.html)
-- [网页版使用说明](readme.html)
-- [网页版更新记录](changelog.html)
 - [更新记录 Markdown](CHANGELOG.md)
 - [下载 1.2.3 DMG](dist/ScreenStay-1.2.3.dmg)
