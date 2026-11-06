@@ -1,0 +1,232 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>更新记录 — ScreenStay</title>
+  <meta name="description" content="ScreenStay 从 1.0.0 到 1.2.3 的中文更新记录：功能、修复和已知问题。" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400..700&display=swap" rel="stylesheet" />
+  <link rel="icon" href="Resources/AppIcon-1024.png" />
+  <link rel="stylesheet" href="docs.css" />
+</head>
+<body id="top" class="page-changelog">
+  <a class="skip-link" href="#main-content">跳至正文</a>
+  <header class="site-head">
+    <a class="site-brand" href="index.html" aria-label="ScreenStay 产品页">
+      <span class="brand-mark" aria-hidden="true"></span>
+      <span>ScreenStay</span>
+    </a>
+    <nav class="site-nav" aria-label="文档导航">
+      <a href="index.html">产品页</a>
+      <a href="readme.html">使用说明</a>
+      <a href="changelog.html" aria-current="page">更新记录</a>
+    </nav>
+    <a class="site-download" href="dist/ScreenStay-1.2.3.dmg" download>下载 DMG</a>
+  </header>
+
+  <main class="doc-shell" id="main-content">
+    <aside class="toc" aria-label="版本目录">
+      <p class="toc__label">版本目录</p>
+      <nav>
+        <a href="#overview">版本总览</a>
+        <div class="toc__group">
+          <a href="#v1-2-3">1.2.3 · 最新</a>
+          <a href="#v1-2-2">1.2.2</a>
+          <a href="#v1-2-1">1.2.1</a>
+          <a href="#v1-2-0">1.2.0</a>
+          <a href="#v1-1-0">1.1.0</a>
+          <a href="#v1-0-0">1.0.0</a>
+        </div>
+        <div class="toc__group">
+          <a href="#upgrade">升级建议</a>
+          <a href="#links">相关链接</a>
+        </div>
+      </nav>
+    </aside>
+
+    <article class="doc">
+      <header class="doc-hero">
+        <p class="eyebrow">Release Notes · ScreenStay</p>
+        <h1>更新记录</h1>
+        <p class="lead">
+          从第一版菜单栏开关，到严格模式、影响熄屏应用列表，再到 macOS 15.4+ 的 Now&nbsp;Playing 修复。这里记录了每一次变化，以及为什么改。
+        </p>
+        <div class="hero-meta">
+          <span class="meta-chip meta-chip--green"><span class="meta-dot" aria-hidden="true"></span>当前 1.2.3</span>
+          <span class="meta-chip">2026-11-04</span>
+          <span class="meta-chip">6 个版本</span>
+        </div>
+      </header>
+
+      <section class="doc-section" id="overview">
+        <h2><span class="num">01</span>版本总览</h2>
+        <div class="table-wrap" tabindex="0" role="region" aria-label="表格，可左右滚动">
+          <table class="version-table">
+            <thead>
+              <tr><th>版本</th><th>日期</th><th>类型</th><th>摘要</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>1.2.3</td><td>2026-11-04</td><td>修复</td><td>用系统 Perl 读取真实播放状态，修复暂停后仍判定播放</td></tr>
+              <tr><td>1.2.2</td><td>2026-11-04</td><td>修复</td><td>改用 JXA，修复严格模式不触发和绿点不出现</td></tr>
+              <tr><td>1.2.1</td><td>2026-11-04</td><td>过渡</td><td>尝试 MRNowPlayingRequest，部分系统仍返回 Paused</td></tr>
+              <tr><td>1.2.0</td><td>2026-11-04</td><td>功能</td><td>新增“仅系统媒体播放时触发”严格模式</td></tr>
+              <tr><td>1.1.0</td><td>2026-11-03</td><td>功能</td><td>右键菜单显示其他影响熄屏的应用</td></tr>
+              <tr><td>1.0.0</td><td>2026-11-03</td><td>首发</td><td>菜单栏开关、媒体检测、防熄屏、开机自启</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="release release--current" id="v1-2-3">
+        <div class="release-head">
+          <h2 class="release-version">1.2.3</h2>
+          <span class="badge">最新稳定版</span>
+          <span class="release-date">2026-11-04 · Build 6</span>
+        </div>
+        <h3>修复</h3>
+        <ul>
+          <li>修复音乐暂停后，菜单栏仍显示播放中、绿点不消失、电源断言继续持有的问题。</li>
+          <li>修复部分播放器暂停后 <code>kMRMediaRemoteNowPlayingInfoPlaybackRate</code> 仍停留在 <code>1</code> 的误判。</li>
+        </ul>
+        <h3>变更</h3>
+        <ul>
+          <li>新增内置 Perl 辅助器：<code>nowplaying-probe.pl</code> 与 <code>libScreenStayNowPlaying.dylib</code>。</li>
+          <li>通过 <code>/usr/bin/perl</code> 调用 <code>MRMediaRemoteGetNowPlayingApplicationIsPlaying</code>，取得真实播放/暂停状态。</li>
+          <li>JXA 只负责读取应用名、标题、PID 和 Bundle ID；Perl 不可用时回退到 PlaybackRate、进程音频输出和 <code>isCurrentlyPlaying</code>。</li>
+          <li>严格模式暂停释放延迟缩短到约 1–3 秒。</li>
+          <li><code>--nowplaying</code> 增加 <code>perlAvailable</code>、<code>perlIsPlaying</code>、<code>pid</code>、<code>bundle</code> 等输出。</li>
+        </ul>
+        <h3>验证</h3>
+        <pre tabindex="0" aria-label="代码，可左右滚动"><code>perlAvailable=true
+perlIsPlaying=false
+source=jxa
+isPlaying=false
+playbackRate=0.0</code></pre>
+        <p>暂停后电源断言释放，绿点消失；播放时 <code>perlIsPlaying=true</code>，断言正常创建。</p>
+      </section>
+
+      <section class="release" id="v1-2-2">
+        <div class="release-head">
+          <h2 class="release-version">1.2.2</h2>
+          <span class="release-date">2026-11-04 · Build 5</span>
+        </div>
+        <h3>修复</h3>
+        <ul>
+          <li>修复严格模式下无法识别实际播放状态、菜单栏绿点不出现。</li>
+          <li>绕开 macOS 15.4+ 对第三方 App 的 MediaRemote 状态限制。</li>
+        </ul>
+        <h3>变更</h3>
+        <ul>
+          <li>使用 <code>/usr/bin/osascript</code> 执行 JXA 辅助脚本，读取 <code>MRNowPlayingRequest.localNowPlayingItem</code>。</li>
+          <li>以 <code>PlaybackRate</code> 判断播放，修复旧 C 接口固定返回 Paused 的问题。</li>
+          <li><code>--nowplaying</code> 增加 <code>source=jxa</code>、<code>isPlaying</code>、<code>playbackRate</code> 等输出。</li>
+        </ul>
+        <div class="callout">
+          1.2.2 解决了“检测不到播放”的问题，但暂停时某些播放器仍会保留 Rate=1，因此后续在 1.2.3 增加了 Perl 真实状态确认。
+        </div>
+      </section>
+
+      <section class="release" id="v1-2-1">
+        <div class="release-head">
+          <h2 class="release-version">1.2.1</h2>
+          <span class="release-date">2026-11-04 · Build 4</span>
+        </div>
+        <h3>过渡修复</h3>
+        <ul>
+          <li>旧 C 接口被限制后，改用 Objective-C 桥接 <code>MRNowPlayingRequest</code>。</li>
+          <li>新增 <code>--nowplaying</code> 诊断命令。</li>
+        </ul>
+        <h3>结果</h3>
+        <p>能读取播放应用名称，但 macOS 27 上 <code>localIsPlaying</code> 与 <code>localPlaybackState</code> 仍返回过期的 Paused。该版本作为过渡记录保留，建议使用 1.2.3。</p>
+      </section>
+
+      <section class="release" id="v1-2-0">
+        <div class="release-head">
+          <h2 class="release-version">1.2.0</h2>
+          <span class="release-date">2026-11-04 · Build 3</span>
+        </div>
+        <h3>新增</h3>
+        <ul>
+          <li>右键菜单新增“仅系统媒体播放时触发”，默认开启。</li>
+          <li>严格模式只监听 macOS 右上角 Now Playing，普通提示音不会触发。</li>
+          <li>关闭严格模式后回退到 Core Audio + Now Playing 兼容模式。</li>
+          <li>开关状态持久化到 UserDefaults。</li>
+        </ul>
+        <h3>已知问题</h3>
+        <p>受 macOS 15.4+ 权限限制，严格模式实际无法识别播放，绿点不出现；已在 1.2.2 / 1.2.3 修复。</p>
+      </section>
+
+      <section class="release" id="v1-1-0">
+        <div class="release-head">
+          <h2 class="release-version">1.1.0</h2>
+          <span class="release-date">2026-11-03 · Build 2</span>
+        </div>
+        <h3>新增</h3>
+        <ul>
+          <li>右键菜单新增“其他影响熄屏的应用”。</li>
+          <li>通过 <code>IOPMCopyAssertionsByProcess</code> 读取 <code>NoDisplaySleepAssertion</code> 与 <code>PreventUserIdleDisplaySleep</code>。</li>
+          <li>自动排除 ScreenStay 自己，按应用合并进程，悬停显示 PID 与断言类型。</li>
+          <li>新增 <code>--blockers</code> 诊断命令。</li>
+        </ul>
+      </section>
+
+      <section class="release" id="v1-0-0">
+        <div class="release-head">
+          <h2 class="release-version">1.0.0</h2>
+          <span class="release-date">2026-11-03 · Build 1</span>
+        </div>
+        <h3>首次发布</h3>
+        <ul>
+          <li>原生 macOS 菜单栏 App，无 Dock 图标；单击开关，右键菜单。</li>
+          <li>Core Audio 输出 + Now Playing 检测，媒体停止后延迟释放。</li>
+          <li>创建 <code>PreventUserIdleDisplaySleep</code> 与 <code>PreventUserIdleSystemSleep</code>。</li>
+          <li>SMAppService 开机自启；通用二进制；自定义图标；DMG / ZIP 安装包。</li>
+          <li>无需辅助功能、屏幕录制或麦克风权限；不联网、不上传数据。</li>
+        </ul>
+      </section>
+
+      <section class="doc-section" id="upgrade">
+        <h2><span class="num">02</span>升级建议</h2>
+        <div class="callout callout--green">
+          <strong>从任意旧版本升级，请使用 1.2.3。</strong> 如果之前注册过开机自启，移动 App 到 Applications 后，建议在右键菜单中关闭再重新打开一次“开机自启”。
+        </div>
+        <p>升级不会清除已有偏好设置：总开关、严格模式、登录项状态都会保留。</p>
+      </section>
+
+      <section class="doc-section" id="links">
+        <h2><span class="num">03</span>相关链接</h2>
+        <div class="card-links">
+          <a class="card-link" href="readme.html">
+            <p class="card-link__title">使用说明</p>
+            <p class="card-link__desc">安装、菜单操作、检测原理与诊断</p>
+          </a>
+          <a class="card-link" href="index.html">
+            <p class="card-link__title">产品页</p>
+            <p class="card-link__desc">回到草地页脚与界面预览</p>
+          </a>
+          <a class="card-link" href="dist/ScreenStay-1.2.3.dmg">
+            <p class="card-link__title">下载 1.2.3</p>
+            <p class="card-link__desc">当前稳定版 DMG</p>
+          </a>
+          <a class="card-link" href="CHANGELOG.md">
+            <p class="card-link__title">Markdown 原文件</p>
+            <p class="card-link__desc">适合终端或 GitHub 阅读</p>
+          </a>
+        </div>
+      </section>
+    </article>
+  </main>
+
+  <footer class="site-foot">
+    <p>© 2026 ScreenStay · 为 macOS 13+ 打造。</p>
+    <nav aria-label="页脚导航">
+      <a href="index.html">产品页</a>
+      <a href="readme.html">使用说明</a>
+      <a href="changelog.html">更新记录</a>
+      <a href="#top">回到顶部 ↑</a>
+    </nav>
+  </footer>
+</body>
+</html>

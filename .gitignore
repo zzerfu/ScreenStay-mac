@@ -1,0 +1,7 @@
+.DS_Store
+*.xcuserstate
+.build/
+DerivedData/
+.web-backup-*/
+ScreenStay.app/
+._*

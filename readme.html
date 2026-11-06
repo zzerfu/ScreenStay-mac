@@ -1,0 +1,253 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>使用说明 — ScreenStay</title>
+  <meta name="description" content="ScreenStay 使用说明：安装、菜单栏操作、Now Playing 检测、电源断言、诊断和卸载。" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400..700&display=swap" rel="stylesheet" />
+  <link rel="icon" href="Resources/AppIcon-1024.png" />
+  <link rel="stylesheet" href="docs.css" />
+</head>
+<body id="top" class="page-guide">
+  <a class="skip-link" href="#main-content">跳至正文</a>
+  <header class="site-head">
+    <a class="site-brand" href="index.html" aria-label="ScreenStay 产品页">
+      <span class="brand-mark" aria-hidden="true"></span>
+      <span>ScreenStay</span>
+    </a>
+    <nav class="site-nav" aria-label="文档导航">
+      <a href="index.html">产品页</a>
+      <a href="readme.html" aria-current="page">使用说明</a>
+      <a href="changelog.html">更新记录</a>
+    </nav>
+    <a class="site-download" href="dist/ScreenStay-1.2.3.dmg" download>下载 DMG</a>
+  </header>
+
+  <main class="doc-shell" id="main-content">
+    <aside class="toc" aria-label="本页目录">
+      <p class="toc__label">本页目录</p>
+      <nav>
+        <a href="#overview">概览</a>
+        <a href="#features">功能</a>
+        <a href="#install">安装</a>
+        <a href="#usage">使用</a>
+        <a href="#how-it-works">检测原理</a>
+        <a href="#diagnostics">诊断</a>
+        <a href="#privacy">隐私与权限</a>
+        <a href="#build">从源码构建</a>
+        <a href="#uninstall">卸载</a>
+        <a href="#links">相关链接</a>
+      </nav>
+    </aside>
+
+    <article class="doc">
+      <header class="doc-hero">
+        <p class="eyebrow">ScreenStay · 使用说明</p>
+        <h1>让屏幕在该亮的时候<br class="hero-break" />保持清醒</h1>
+        <p class="lead">
+          ScreenStay 是一个常驻 macOS 菜单栏的小工具：音乐或视频播放时阻止屏幕休眠，暂停后自动释放。它只关心系统播放列表，不会被零散的提示音打扰。
+        </p>
+        <div class="hero-meta">
+          <span class="meta-chip meta-chip--green"><span class="meta-dot" aria-hidden="true"></span>v1.2.3 · 稳定版</span>
+          <span class="meta-chip">macOS 13+</span>
+          <span class="meta-chip">无追踪</span>
+        </div>
+      </header>
+
+      <section class="doc-section" id="overview">
+        <h2><span class="num">01</span>概览</h2>
+        <p>
+          默认的严格模式只认可 macOS 右上角“正在播放”列表中的媒体。音乐或视频开始时，ScreenStay 创建一个防熄屏断言；暂停或结束后，断言会在 1–3 秒内释放。
+        </p>
+        <div class="summary-grid">
+          <div class="summary-card">
+            <p class="summary-card__label">系统</p>
+            <p class="summary-card__value">macOS 13 及以上</p>
+          </div>
+          <div class="summary-card">
+            <p class="summary-card__label">架构</p>
+            <p class="summary-card__value">Apple Silicon + Intel</p>
+          </div>
+          <div class="summary-card">
+            <p class="summary-card__label">权限</p>
+            <p class="summary-card__value">无额外系统权限</p>
+          </div>
+        </div>
+        <div class="callout callout--green">
+          <strong>当前版本 1.2.3。</strong> 使用系统 Perl 读取真实的 Now Playing 播放状态，解决了 macOS 15.4+ 上第三方 App 查询接口返回过期 Paused 的问题。
+        </div>
+      </section>
+
+      <section class="doc-section" id="features">
+        <h2><span class="num">02</span>功能</h2>
+        <div class="feature-grid">
+          <div class="feature-card">
+            <h3>只看系统播放列表</h3>
+            <p>严格模式不采样普通音频输出，连续提示音、点击音效和后台声音不会触发。</p>
+          </div>
+          <div class="feature-card">
+            <h3>暂停即释放</h3>
+            <p>读取真实播放状态与播放器进程音频输出，暂停后 1–3 秒内释放电源断言。</p>
+          </div>
+          <div class="feature-card">
+            <h3>菜单栏即开关</h3>
+            <p>单击图标立即开启或关闭；右键打开菜单，查看状态、开机自启和影响熄屏的其他应用。</p>
+          </div>
+          <div class="feature-card">
+            <h3>安静的电源断言</h3>
+            <p>只在需要时创建 PreventUserIdleDisplaySleep 与 PreventUserIdleSystemSleep。</p>
+          </div>
+          <div class="feature-card">
+            <h3>开机自启</h3>
+            <p>通过 SMAppService 注册登录项，可在系统设置中批准或撤销。</p>
+          </div>
+          <div class="feature-card">
+            <h3>不联网</h3>
+            <p>没有账号、遥测或云端请求；所有判断都在本机完成。</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="doc-section" id="install">
+        <h2><span class="num">03</span>安装</h2>
+        <p>把 App 放进“应用程序”文件夹并打开即可。第一次打开时，菜单栏会出现一个显示器图标。</p>
+        <div class="button-row">
+          <a class="button" href="dist/ScreenStay-1.2.3.dmg" download>下载 DMG</a>
+          <a class="button button--ghost" href="dist/ScreenStay-1.2.3.zip">下载 ZIP</a>
+          <a class="button button--ghost" href="changelog.html">查看更新记录</a>
+        </div>
+        <ol>
+          <li>双击 DMG，把 <strong>ScreenStay</strong> 拖入 Applications。</li>
+          <li>打开 ScreenStay，允许它出现在菜单栏。</li>
+          <li>需要开机启动时，右键图标并勾选“开机自启”。</li>
+        </ol>
+        <blockquote>
+          如果 Gatekeeper 拦截，请在“系统设置 → 隐私与安全性”中选择“仍要打开”，或执行 <code>xattr -dr com.apple.quarantine /Applications/ScreenStay.app</code>。
+        </blockquote>
+      </section>
+
+      <section class="doc-section" id="usage">
+        <h2><span class="num">04</span>使用</h2>
+        <div class="table-wrap" tabindex="0" role="region" aria-label="表格，可左右滚动">
+          <table>
+            <thead>
+              <tr><th>操作</th><th>效果</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>单击菜单栏图标</td><td>立即开启或关闭防熄屏</td></tr>
+              <tr><td>右键 / Control + 单击</td><td>打开设置菜单</td></tr>
+              <tr><td>菜单 → 保持屏幕常亮</td><td>总开关，与单击图标等价</td></tr>
+              <tr><td>菜单 → 仅系统媒体播放时触发</td><td>严格模式开关，默认开启</td></tr>
+              <tr><td>菜单 → 开机自启</td><td>注册或取消登录项</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>开启保护且媒体正在播放时，图标右侧会出现绿点；关闭开关后图标变暗，不再干预屏幕休眠。</p>
+        <div class="callout">
+          菜单中的“其他影响熄屏的应用”会列出持有 NoDisplaySleepAssertion 或 PreventUserIdleDisplaySleep 的其他进程。macOS 会汇总所有应用的断言，ScreenStay 无法取消别人的防熄屏请求。
+        </div>
+      </section>
+
+      <section class="doc-section" id="how-it-works">
+        <h2><span class="num">05</span>检测原理</h2>
+        <p>严格模式使用两层只读查询，避免只凭播放速率或静音音频流误判：</p>
+        <ol>
+          <li><strong>系统 Perl 辅助器</strong>：通过 <code>/usr/bin/perl</code> 加载内置的极小 dylib，调用 <code>MRMediaRemoteGetNowPlayingApplicationIsPlaying</code>，取得真实的播放/暂停状态。</li>
+          <li><strong>JXA 辅助脚本</strong>：通过 <code>MRNowPlayingRequest</code> 读取应用名、标题、PID 和 Bundle ID，用于菜单展示。</li>
+          <li><strong>电源断言</strong>：确认播放后创建 <code>PreventUserIdleDisplaySleep</code> 和 <code>PreventUserIdleSystemSleep</code>。</li>
+          <li><strong>回退检测</strong>：Perl 不可用时，使用 PlaybackRate、播放器进程音频输出和 <code>isCurrentlyPlaying</code> 组合判断。</li>
+        </ol>
+        <div class="callout">
+          macOS 15.4 之后，普通第三方 App 直接调用 MediaRemote C 接口会得到过期的 Paused。ScreenStay 不申请辅助功能、屏幕录制或麦克风权限，而是使用系统 Perl 作为受信任的读取进程。
+        </div>
+      </section>
+
+      <section class="doc-section" id="diagnostics">
+        <h2><span class="num">06</span>诊断</h2>
+        <p>App 内置命令行诊断，不需要打开菜单：</p>
+        <pre tabindex="0" aria-label="代码，可左右滚动"><code># 观察 10 秒检测状态与电源断言
+/Applications/ScreenStay.app/Contents/MacOS/ScreenStay --diagnose 10
+
+# 查看当前影响熄屏的其他应用
+/Applications/ScreenStay.app/Contents/MacOS/ScreenStay --blockers
+
+# 查看系统 Now Playing 状态
+/Applications/ScreenStay.app/Contents/MacOS/ScreenStay --nowplaying
+
+# 查看 / 开启 / 关闭登录项
+/Applications/ScreenStay.app/Contents/MacOS/ScreenStay --login-status
+/Applications/ScreenStay.app/Contents/MacOS/ScreenStay --enable-login
+/Applications/ScreenStay.app/Contents/MacOS/ScreenStay --disable-login</code></pre>
+        <p>播放音乐时，<code>--nowplaying</code> 应显示 <code>perlIsPlaying=true</code>；暂停后变为 <code>false</code>，同时电源断言释放。</p>
+      </section>
+
+      <section class="doc-section" id="privacy">
+        <h2><span class="num">07</span>隐私与权限</h2>
+        <ul>
+          <li>不联网、不上传播放记录或设备信息。</li>
+          <li>不需要辅助功能、屏幕录制或麦克风权限。</li>
+          <li>只读访问 macOS 的播放状态与进程音频状态。</li>
+          <li>菜单栏中的“影响熄屏的应用”只在本机读取电源断言。</li>
+          <li>偏好设置保存在本机 UserDefaults 中。</li>
+        </ul>
+      </section>
+
+      <section class="doc-section" id="build">
+        <h2><span class="num">08</span>从源码构建</h2>
+        <p>需要 macOS 13+ 与 Command Line Tools：</p>
+        <pre tabindex="0" aria-label="代码，可左右滚动"><code>cd ScreenStay
+./build.sh
+open ScreenStay.app</code></pre>
+        <p>构建脚本会编译 arm64 与 x86_64、合并通用二进制、打包内置 Perl 辅助器，并在临时目录完成 ad-hoc 签名。</p>
+        <p>重新生成安装包：</p>
+        <pre tabindex="0" aria-label="代码，可左右滚动"><code>./package.sh</code></pre>
+      </section>
+
+      <section class="doc-section" id="uninstall">
+        <h2><span class="num">09</span>卸载</h2>
+        <ol>
+          <li>右键菜单栏图标，取消“开机自启”。</li>
+          <li>选择“退出 ScreenStay”。</li>
+          <li>删除 <code>/Applications/ScreenStay.app</code>。</li>
+          <li>可选：执行 <code>defaults delete com.zzerfu.ScreenStay</code> 清理偏好设置。</li>
+        </ol>
+      </section>
+
+      <section class="doc-section" id="links">
+        <h2><span class="num">10</span>相关链接</h2>
+        <div class="card-links">
+          <a class="card-link" href="index.html">
+            <p class="card-link__title">产品页</p>
+            <p class="card-link__desc">草地页脚、视频与界面预览</p>
+          </a>
+          <a class="card-link" href="changelog.html">
+            <p class="card-link__title">更新记录</p>
+            <p class="card-link__desc">从 1.0.0 到 1.2.3 的完整变更</p>
+          </a>
+          <a class="card-link" href="dist/ScreenStay-1.2.3.dmg">
+            <p class="card-link__title">下载 DMG</p>
+            <p class="card-link__desc">当前稳定版安装包</p>
+          </a>
+          <a class="card-link" href="README.md">
+            <p class="card-link__title">Markdown 原文件</p>
+            <p class="card-link__desc">适合终端或 GitHub 阅读</p>
+          </a>
+        </div>
+      </section>
+    </article>
+  </main>
+
+  <footer class="site-foot">
+    <p>© 2026 ScreenStay · 为 macOS 13+ 打造。</p>
+    <nav aria-label="页脚导航">
+      <a href="index.html">产品页</a>
+      <a href="readme.html">使用说明</a>
+      <a href="changelog.html">更新记录</a>
+      <a href="#top">回到顶部 ↑</a>
+    </nav>
+  </footer>
+</body>
+</html>

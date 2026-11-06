@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ScreenStay — 守护 Mac 屏幕的安静小工具</title>
+  <meta name="description" content="ScreenStay —— 在音乐或视频播放时保持 Mac 屏幕清醒，暂停后自动释放。" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400..700&display=swap" rel="stylesheet" />
+  <link rel="icon" href="Resources/AppIcon-1024.png" />
+  <link rel="stylesheet" href="docs.css" />
+  <style>
+    .footer { position:relative; isolation:isolate; min-height:calc(100svh - 84px); overflow:hidden; }
+    .footer__content { position:relative; z-index:3; display:grid; grid-template-columns:minmax(0,1.3fr) minmax(300px,.9fr); align-items:start; gap:clamp(40px,7vw,100px); max-width:1136px; margin:auto; padding:72px 32px 350px; }
+    .brand__logo { display:inline-flex; align-items:center; gap:10px; color:var(--green); font-size:13px; font-weight:600; letter-spacing:.03em; }
+    .brand__mark { width:23px; height:23px; border-radius:7px; }
+    .brand__title { max-width:12em; margin:22px 0 0; font-size:clamp(30px,3.5vw,46px); font-weight:600; line-height:1.4; letter-spacing:-.045em; text-wrap:balance; }
+    .brand__text { max-width:36em; margin:22px 0 0; color:var(--body); font-size:15px; line-height:2; }
+    .brand__cta { margin-top:28px; min-height:48px; padding:12px 22px; font-size:14px; }
+    .brand__cta svg { width:17px; height:17px; }
+    .brand__copy { margin-top:28px; color:var(--muted); font-size:12px; line-height:1.8; }
+    .brand__by { display:flex; align-items:center; flex-wrap:wrap; gap:5px; margin-top:12px; color:var(--body); font-size:12px; }
+    .brand__author { display:inline-flex; align-items:center; gap:7px; margin-left:4px; }
+    .brand__avatar { display:inline-flex; width:23px; height:23px; border-radius:50%; overflow:hidden; }
+    .brand__avatar img { width:100%; height:100%; object-fit:cover; }
+    .brand__status { padding:0; list-style:none; margin-top:22px; }
+    .chip svg { width:12px; height:12px; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
+    .footer__stage { position:absolute; z-index:0; inset:auto 0 0; height:350px; overflow:hidden; pointer-events:none; background:#dce9dc; }
+    .footer__video { width:100%; height:100%; display:block; object-fit:cover; object-position:50% 75%; opacity:.7; }
+    .footer__stage::after { content:""; position:absolute; inset:0; background:linear-gradient(to bottom,var(--paper),rgb(248 249 245 / .45) 35%,rgb(228 237 224 / .18)); }
+    .footer__wordmark { position:absolute; z-index:1; left:0; right:0; bottom:26px; margin:0; color:rgb(255 255 255 / .76); font-size:clamp(56px,14vw,190px); font-weight:600; line-height:1; letter-spacing:-.055em; text-align:center; pointer-events:none; user-select:none; }
+    .footer__fog { display:none; }
+    @media(max-width:960px) { .footer__content { gap:32px; padding:48px 24px 290px; grid-template-columns:minmax(0,1fr) minmax(290px,.95fr); } .footer__stage { height:280px; } }
+    @media(max-width:720px) { .footer__content { grid-template-columns:1fr; gap:36px; padding:36px 20px 240px; } .brand__title { font-size:34px; } .brand__text { font-size:14px; } .footer__stage { height:230px; } .footer__wordmark { bottom:40px; font-size:15vw; } }
+    @media(max-width:360px) { .brand__title { font-size:30px; } }
+    @media(prefers-reduced-motion:reduce) { .footer__video { display:none; } }
+    /* A static illustration, not a live playback control. */
+    .calm-card { min-width:0; margin-top:8px; padding:28px; border:1px solid #dce6da; border-radius:20px; background:linear-gradient(155deg,#f0f5ec,#fcfdf9); text-align:center; }
+    .calm-card__eyebrow { color:var(--green); font-size:11px; letter-spacing:.12em; }
+    .calm-card__scene { position:relative; display:flex; flex-direction:column; align-items:center; margin:30px auto 26px; }
+    .calm-card__screen { position:relative; width:min(100%,230px); aspect-ratio:1.5; overflow:hidden; border:6px solid #fff; border-radius:12px; background:#dbe8d9; box-shadow:0 8px 24px rgb(36 59 52 / .07),0 0 0 1px #d9e4d7; }
+    .calm-card__sun { position:absolute; top:20%; right:22%; width:30px; height:30px; border-radius:50%; background:#f8f9e8; }
+    .calm-card__hill { position:absolute; left:-20%; bottom:-70%; width:150%; height:120%; border-radius:50%; background:#b7cfb6; transform:rotate(-12deg); }
+    .calm-card__play { position:absolute; top:50%; left:50%; display:grid; place-items:center; width:36px; height:36px; padding-left:3px; border-radius:50%; background:rgb(255 255 255 / .85); color:var(--green); font-size:12px; transform:translate(-50%,-50%); }
+    .calm-card__stand { width:64px; height:24px; border-bottom:4px solid #c2d2c0; background:linear-gradient(to right,transparent 35%,#d4dfd1 35% 65%,transparent 65%); }
+    .calm-card__indicator { display:inline-flex; align-items:center; gap:7px; margin-top:18px; color:var(--green); font-size:11px; }
+    .calm-card__indicator>span { width:6px; height:6px; border-radius:50%; background:var(--green); }
+    .calm-card h2 { font-size:26px; font-weight:500; line-height:1.55; letter-spacing:-.03em; }
+    .calm-card__text { margin-top:14px; color:var(--body); font-size:13px; line-height:1.9; }
+    .calm-card__link { display:inline-flex; align-items:center; gap:16px; margin-top:22px; padding:8px 0; color:var(--green); font-size:13px; }
+    .calm-card__link:hover { text-decoration:underline; text-underline-offset:5px; }
+    .calm-card__caption { margin-top:14px; color:var(--muted); font-size:10px; }
+    @media(max-width:720px) { .calm-card { width:100%; max-width:420px; margin:0 auto; padding:26px 22px; } }
+  </style>
+</head>
+<body>
+  <a class="skip-link" href="#main-content">跳至正文</a>
+  <header class="site-head">
+    <a class="site-brand" href="index.html" aria-label="ScreenStay 产品页"><span class="brand-mark" aria-hidden="true"></span><span>ScreenStay</span></a>
+    <nav class="site-nav" aria-label="网站导航">
+      <a href="index.html" aria-current="page">产品页</a>
+      <a href="readme.html">使用说明</a>
+      <a href="changelog.html">更新记录</a>
+    </nav>
+    <a class="site-download" href="dist/ScreenStay-1.2.3.dmg" download>下载 DMG</a>
+  </header>
+
+  <main class="footer" id="top" aria-label="ScreenStay 产品介绍">
+    <div class="footer__stage" aria-hidden="true">
+      <video
+        class="footer__video"
+        src="https://d2ol7oe51mr4n9.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/4d01c727-d9c5-47c8-a778-35a451ffd39f.mp4"
+        poster="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20261014_121838_c97d0940-f430-4304-8573-4f47ee44f447.png"
+        autoplay
+        muted
+        loop
+        playsinline
+        preload="metadata"
+      ></video>
+    </div>
+
+    <p class="footer__wordmark" aria-hidden="true">ScreenStay</p>
+    <div class="footer__fog" aria-hidden="true"></div>
+
+    <div class="footer__content" id="main-content">
+      <div class="brand">
+        <a class="brand__logo" href="#top" aria-label="ScreenStay 首页">
+          <span class="brand__mark" aria-hidden="true"></span>
+          <span>ScreenStay</span>
+        </a>
+
+        <h1 class="brand__title">守护 Mac 屏幕的安静小工具</h1>
+        <p class="brand__text">
+          ScreenStay 读取 macOS 右上角的“正在播放”列表，只在音乐或视频真正播放时阻止屏幕休眠。暂停播放后，屏幕即可自由休息——无需反复设置，也不申请额外权限。
+        </p>
+
+        <a class="brand__cta" href="dist/ScreenStay-1.2.3.dmg" download>
+          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <path d="M17.05 12.54c-.03-2.75 2.25-4.07 2.35-4.14-1.28-1.87-3.27-2.13-3.98-2.16-1.69-.17-3.3 1-4.16 1-.86 0-2.18-.97-3.59-.95-1.85.03-3.55 1.07-4.5 2.72-1.92 3.33-.49 8.25 1.38 10.95.91 1.32 2 2.8 3.43 2.75 1.38-.06 1.9-.89 3.56-.89 1.66 0 2.13.89 3.59.86 1.48-.03 2.42-1.34 3.33-2.67 1.05-1.53 1.48-3.02 1.5-3.1-.03-.01-2.88-1.1-2.91-4.37ZM14.31 4.46c.76-.92 1.27-2.2 1.13-3.46-1.09.04-2.41.73-3.19 1.64-.7.81-1.31 2.1-1.15 3.34 1.22.09 2.46-.62 3.21-1.52Z" />
+          </svg>
+          立即获取 ScreenStay
+        </a>
+
+        <p class="brand__copy">© 2026 ScreenStay — 为 macOS 13+ 打造。</p>
+
+        <p class="brand__by">
+          Built with <span class="brand__heart" role="img" aria-label="love">💙</span> by
+          <span class="brand__author">
+            <span class="brand__avatar" aria-hidden="true">
+              <img src="Resources/Profile.jpg" alt="" width="200" height="200" />
+            </span>
+            zzerfu
+          </span>
+        </p>
+
+        <ul class="brand__status" aria-label="ScreenStay 状态">
+          <li class="chip"><span class="chip__dot" aria-hidden="true"></span>v1.2.3 · 稳定版</li>
+          <li class="chip">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M20 11a8 8 0 1 0-2.3 5.7" />
+              <path d="M20 4v7h-7" />
+            </svg>
+            通用二进制
+          </li>
+          <li class="chip">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="m12 3 2.7 5.6 6.1.8-4.5 4.2 1.1 6-5.4-2.9-5.4 2.9 1.1-6L3.2 9.4l6.1-.8Z" />
+            </svg>
+            无追踪
+          </li>
+        </ul>
+      </div>
+
+      <section class="calm-card" aria-labelledby="calm-card-title">
+        <p class="calm-card__eyebrow">刚刚好的陪伴</p>
+        <div class="calm-card__scene" aria-hidden="true">
+          <div class="calm-card__screen">
+            <span class="calm-card__sun"></span>
+            <span class="calm-card__hill"></span>
+            <span class="calm-card__play">▶</span>
+          </div>
+          <div class="calm-card__stand"></div>
+          <span class="calm-card__indicator"><span></span>媒体播放中 · 保持清醒</span>
+        </div>
+        <h2 id="calm-card-title">播放时亮屏，<br />暂停后休息。</h2>
+        <p class="calm-card__text">跟随系统“正在播放”的节奏，<br />把屏幕的开与关，交还给日常。</p>
+        <a class="calm-card__link" href="readme.html#how-it-works">了解它如何工作 <span aria-hidden="true">↗</span></a>
+        <p class="calm-card__caption">工作方式示意 · 无需额外权限</p>
+      </section>
+    </div>
+  </main>
+</body>
+</html>
